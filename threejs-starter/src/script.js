@@ -1,98 +1,56 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import * as dat from 'dat.gui'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
-// Debug
-const gui = new dat.GUI()
+function init() {
+    
+    let scene, camera, renderer, car, directionalLight, light;
 
-// Canvas
-const canvas = document.querySelector('canvas.webgl')
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x292929);
 
-// Scene
-const scene = new THREE.Scene()
+    camera = new THREE.PerspectiveCamera(40, window.innerWidth/window.innerHeight,1,5000);
+    camera.rotation.y = 45/180*Math.PI;
+    camera.position.x = 800;
+    camera.position.y = 100;
+    camera.position.z = 800;
 
-// Objects
-const geometry = new THREE.TorusGeometry( .7, .2, 16, 100 );
+    let AmbientLight = new THREE.AmbientLight(0x404040,15);
+    
+    scene.add(AmbientLight);
 
-// Materials
+    directionalLight = new THREE.DirectionalLight(0xffffff,8);
+    directionalLight.position.set(0,1,0);
+    directionalLight.castShadow = true;
+    
+    scene.add(directionalLight);
 
-const material = new THREE.MeshBasicMaterial()
-material.color = new THREE.Color(0x0000ff)
+    light = new THREE.PointLight(0xcccccc,8);
+    light.position.set(0,300,500);
+    
+    scene.add(light);
+    
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    document.body.appendChild(renderer.domElement);
 
-// Mesh
-const sphere = new THREE.Mesh(geometry,material)
-scene.add(sphere)
+    let example = new THREE.Object3D();
 
-// Lights
-
-const pointLight = new THREE.PointLight(0xffffff, 0.1)
-pointLight.position.x = 2
-pointLight.position.y = 3
-pointLight.position.z = 4
-scene.add(pointLight)
-
-// Sizes
-
-const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
+    let loader = new GLTFLoader();
+    
+    loader.load('scene.gltf', (gltf) => {
+        example = gltf.scene;
+        car = example.children[0];
+        car.scale.set(200,200,200);
+        scene.add(example);
+        animate();
+    })
+    function animate() {
+        renderer.render(scene, camera);
+        window.requestAnimationFrame(animate);
+    }
 }
 
-window.addEventListener('resize', () =>
-{
-    // Update sizes
-    sizes.width = window.innerWidth
-    sizes.height = window.innerHeight
-
-    // Update camera
-    camera.aspect = sizes.width / sizes.height
-    camera.updateProjectionMatrix()
-
-    // Update renderer
-    renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-})
-
-// Base camera
-
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = 0
-camera.position.y = 0
-camera.position.z = 2
-scene.add(camera)
-
-// Controls
-// const controls = new OrbitControls(camera, canvas)
-// controls.enableDamping = true
-
-// Renderer
-
-const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
-})
-renderer.setSize(sizes.width, sizes.height)
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-
-// Animate
-
-const clock = new THREE.Clock()
-
-const tick = () => {
-
-    const elapsedTime = clock.getElapsedTime()
-
-    // Update objects
-    sphere.rotation.y = .5 * elapsedTime
-
-    // Update Orbital Controls
-    // controls.update()
-
-    // Render
-    renderer.render(scene, camera)
-
-    // Call tick again on the next frame
-    window.requestAnimationFrame(tick)
-}
-
-tick()
+init();
